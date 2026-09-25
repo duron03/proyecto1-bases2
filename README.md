@@ -6,6 +6,9 @@
 ### Estado del proyecto:
 En curso.
 
+### Objetivos del proyecto:
+
+
 ### Enlace del video:
 
 

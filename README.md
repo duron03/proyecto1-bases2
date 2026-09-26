@@ -1,7 +1,7 @@
 # proyecto1-bases2
 ### Nombre y carné de los integrantes: 
 - Noé López Durón (2024234500).
-- Julián Pizarro Castro ().
+- Julián Pizarro Castro (2024146595).
 
 ### Estado del proyecto:
 En curso.

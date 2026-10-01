@@ -1,9 +1,9 @@
 import express from 'express';
-import WWIRoutes from './routes/WWI.routes.js';
+import WwiRoutes from './routes/wwi.routes.js';
 
 const app = express();
 
 app.use(express.json());
-app.use(WWIRoutes);
+app.use(WwiRoutes);
 
 export default app;

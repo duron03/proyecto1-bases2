@@ -8,7 +8,7 @@ import {
     getSupplierDetails,
     getInvoices,
     getInvoiceDetails
-} from '../controllers/WWI.controller.js';
+} from '../controllers/wwi.controller.js';
 
 const router = Router();
 
@@ -34,5 +34,27 @@ router.get('/getInvoices', getInvoices);
 
 router.get('/getInvoiceDetails/:InvoiceID', getInvoiceDetails);
 // ======================================================== //
+
+// ==================== Peticiones PUT ==================== //
+// ======================================================== //
+
+// Clientes.
+
+// Inventario.
+
+// Proveedores.
+
+// Ventas.
+
+// ==================== Peticiones DELETE ==================== //
+// =========================================================== //
+
+// Clientes.
+
+// Inventario.
+
+// Proveedores.
+
+// Ventas.
 
 export default router;

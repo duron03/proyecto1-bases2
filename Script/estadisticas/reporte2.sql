@@ -30,8 +30,21 @@ BEGIN
         BEGIN TRANSACTION;
 
         SELECT
-            C.CustomerName,
-            CC.CustomerCategoryName,
+            CASE
+                WHEN GROUPING(C.CustomerName) = 1
+                    THEN 'TOTAL PER CUSTOMER'
+                ELSE C.CustomerName
+            END AS CustomerName,
+            CASE
+                WHEN GROUPING(C.CustomerName) <> 1
+                    THEN
+                        CASE
+                            WHEN GROUPING(CC.CustomerCategoryName) = 1
+                                THEN CONCAT('TOTAL', ' - ', UPPER(C.CustomerName))
+                            ELSE CC.CustomerCategoryName
+                        END
+                ELSE ' '
+            END AS CustomerCategoryName,
             MAX(CT.TransactionAmount) AS MaxAmount,
             MIN(CT.TransactionAmount) AS MinAmount,
             AVG(CT.TransactionAmount) AS AvgPurchase

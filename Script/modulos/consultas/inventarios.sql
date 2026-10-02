@@ -57,12 +57,12 @@ BEGIN
         LEFT JOIN dbo.src_GrupoProducto AS SG
             ON SISG.StockGroupID = SG.StockGroupID
         WHERE (@StockItemName IS NULL
-               OR SI.StockItemName LIKE '%' + @StockItemName + '%')
-          AND (@StockGroupID IS NULL OR SG.StockGroupID = @StockGroupID)
-          AND (@MinimumQuantityOnHand IS NULL
-               OR H.QuantityOnHand >= @MinimumQuantityOnHand)
-          AND (@MaximumQuantityOnHand IS NULL
-               OR H.QuantityOnHand <= @MaximumQuantityOnHand)
+            OR SI.StockItemName LIKE '%' + @StockItemName + '%')
+            AND (@StockGroupID IS NULL OR SG.StockGroupID = @StockGroupID)
+            AND (@MinimumQuantityOnHand IS NULL
+            OR H.QuantityOnHand >= @MinimumQuantityOnHand)
+            AND (@MaximumQuantityOnHand IS NULL
+            OR H.QuantityOnHand <= @MaximumQuantityOnHand)
         ORDER BY SI.StockItemName ASC, SG.StockGroupName ASC;
 
         COMMIT TRANSACTION;

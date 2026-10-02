@@ -47,11 +47,11 @@ BEGIN
         LEFT JOIN dbo.src_MetodoEntrega AS DM
             ON S.DeliveryMethodID = DM.DeliveryMethodID
         WHERE (@SupplierName IS NULL
-               OR S.SupplierName LIKE '%' + @SupplierName + '%')
-          AND (@SupplierCategoryID IS NULL
-               OR S.SupplierCategoryID = @SupplierCategoryID)
-          AND (@DeliveryMethodID IS NULL
-               OR S.DeliveryMethodID = @DeliveryMethodID)
+            OR S.SupplierName LIKE '%' + @SupplierName + '%')
+            AND (@SupplierCategoryID IS NULL
+            OR S.SupplierCategoryID = @SupplierCategoryID)
+            AND (@DeliveryMethodID IS NULL
+            OR S.DeliveryMethodID = @DeliveryMethodID)
         ORDER BY S.SupplierName ASC;
 
         COMMIT TRANSACTION;

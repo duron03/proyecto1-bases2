@@ -51,11 +51,11 @@ BEGIN
         INNER JOIN dbo.src_MetodoEntrega AS DM
             ON C.DeliveryMethodID = DM.DeliveryMethodID
         WHERE (@CustomerName IS NULL
-               OR C.CustomerName LIKE '%' + @CustomerName + '%')
-          AND (@CustomerCategoryID IS NULL
-               OR C.CustomerCategoryID = @CustomerCategoryID)
-          AND (@DeliveryMethodID IS NULL
-               OR C.DeliveryMethodID = @DeliveryMethodID)
+            OR C.CustomerName LIKE '%' + @CustomerName + '%')
+            AND (@CustomerCategoryID IS NULL
+            OR C.CustomerCategoryID = @CustomerCategoryID)
+            AND (@DeliveryMethodID IS NULL
+            OR C.DeliveryMethodID = @DeliveryMethodID)
         ORDER BY C.CustomerName ASC;
 
         COMMIT TRANSACTION;

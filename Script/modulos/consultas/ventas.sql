@@ -57,11 +57,11 @@ BEGIN
         INNER JOIN dbo.src_DetalleFactura AS IL
             ON I.InvoiceID = IL.InvoiceID
         WHERE (@CustomerName IS NULL
-               OR C.CustomerName LIKE '%' + @CustomerName + '%')
-          AND (@InvoiceDateFrom IS NULL OR I.InvoiceDate >= @InvoiceDateFrom)
-          AND (@InvoiceDateTo IS NULL OR I.InvoiceDate <= @InvoiceDateTo)
-          AND (@DeliveryMethodID IS NULL
-               OR I.DeliveryMethodID = @DeliveryMethodID)
+            OR C.CustomerName LIKE '%' + @CustomerName + '%')
+            AND (@InvoiceDateFrom IS NULL OR I.InvoiceDate >= @InvoiceDateFrom)
+            AND (@InvoiceDateTo IS NULL OR I.InvoiceDate <= @InvoiceDateTo)
+            AND (@DeliveryMethodID IS NULL
+            OR I.DeliveryMethodID = @DeliveryMethodID)
         GROUP BY
             I.InvoiceID,
             I.InvoiceDate,
@@ -70,9 +70,9 @@ BEGIN
             DM.DeliveryMethodID,
             DM.DeliveryMethodName
         HAVING (@MinimumInvoiceAmount IS NULL
-                OR SUM(IL.ExtendedPrice) >= @MinimumInvoiceAmount)
-           AND (@MaximumInvoiceAmount IS NULL
-                OR SUM(IL.ExtendedPrice) <= @MaximumInvoiceAmount)
+            OR SUM(IL.ExtendedPrice) >= @MinimumInvoiceAmount)
+            AND (@MaximumInvoiceAmount IS NULL
+            OR SUM(IL.ExtendedPrice) <= @MaximumInvoiceAmount)
         ORDER BY C.CustomerName ASC;
 
         COMMIT TRANSACTION;

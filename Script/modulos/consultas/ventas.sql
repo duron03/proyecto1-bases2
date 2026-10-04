@@ -102,21 +102,39 @@ BEGIN
             C.CustomerID,
             C.CustomerName,
             C.WebsiteURL AS CustomerWebsiteURL,
+            I.BillToCustomerID,
+            BC.CustomerName AS BillToCustomerName,
+            I.DeliveryMethodID,
             DM.DeliveryMethodName,
             I.CustomerPurchaseOrderNumber,
+            I.ContactPersonID,
             CP.FullName AS ContactPerson,
+            I.AccountsPersonID,
+            AP.FullName AS AccountsPerson,
+            I.SalespersonPersonID,
             SP.FullName AS SalesPerson,
-            I.InvoiceDate,
-            I.DeliveryInstructions
+            I.PackedByPersonID,
+            PP.FullName AS PackedByPerson,
+            CONVERT(char(10), I.InvoiceDate, 23) AS InvoiceDate,
+            I.IsCreditNote,
+            I.Comments,
+            I.DeliveryInstructions,
+            I.LastEditedBy
         FROM dbo.src_Factura AS I
         INNER JOIN dbo.src_Cliente AS C
             ON I.CustomerID = C.CustomerID
+        INNER JOIN dbo.src_Cliente AS BC
+            ON I.BillToCustomerID = BC.CustomerID
         INNER JOIN dbo.src_MetodoEntrega AS DM
             ON I.DeliveryMethodID = DM.DeliveryMethodID
         INNER JOIN dbo.src_Persona AS CP
             ON I.ContactPersonID = CP.PersonID
+        INNER JOIN dbo.src_Persona AS AP
+            ON I.AccountsPersonID = AP.PersonID
         INNER JOIN dbo.src_Persona AS SP
             ON I.SalespersonPersonID = SP.PersonID
+        INNER JOIN dbo.src_Persona AS PP
+            ON I.PackedByPersonID = PP.PersonID
         WHERE I.InvoiceID = @InvoiceID;
 
         -- Detalle de la factura.
@@ -134,6 +152,52 @@ BEGIN
             ON IL.StockItemID = SI.StockItemID
         WHERE IL.InvoiceID = @InvoiceID
         ORDER BY IL.InvoiceLineID ASC;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+        THROW;
+    END CATCH;
+END;
+GO
+
+-- Devuelve los catálogos utilizados en el formulario de ventas.
+CREATE OR ALTER PROCEDURE dbo.usp_Ventas_ObtenerCatalogos
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        SELECT
+            CustomerID AS [Value],
+            CustomerName AS [Label]
+        FROM dbo.src_Cliente
+        ORDER BY CustomerName ASC;
+
+        SELECT
+            PersonID AS [Value],
+            FullName AS [Label]
+        FROM dbo.src_Persona
+        ORDER BY FullName ASC;
+
+        SELECT
+            DeliveryMethodID AS [Value],
+            DeliveryMethodName AS [Label]
+        FROM dbo.src_MetodoEntrega
+        ORDER BY DeliveryMethodName ASC;
+
+        SELECT
+            StockItemID AS [Value],
+            StockItemName AS [Label],
+            UnitPrice,
+            TaxRate
+        FROM dbo.src_Producto
+        ORDER BY StockItemName ASC;
 
         COMMIT TRANSACTION;
     END TRY

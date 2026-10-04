@@ -206,9 +206,9 @@ BEGIN
             RecommendedRetailPrice = @RecommendedRetailPrice,
             TypicalWeightPerUnit = @TypicalWeightPerUnit,
             MarketingComments = @MarketingComments,
-            InternalComments = @InternalComments,
-            Photo = @Photo,
-            CustomFields = @CustomFields,
+            InternalComments = ISNULL(@InternalComments, InternalComments),
+            Photo = ISNULL(@Photo, Photo),
+            CustomFields = ISNULL(@CustomFields, CustomFields),
             LastEditedBy = @LastEditedBy
         WHERE StockItemID = @StockItemID;
 

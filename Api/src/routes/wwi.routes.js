@@ -2,13 +2,19 @@ import { Router } from 'express';
 import {
 
     // Peticiones GET
+    getApiHealth,
     getCustomers,
+    getCustomerCatalogs,
+    getCities,
     getCustomerDetails,
     getInventories,
+    getInventoryCatalogs,
     getInventoryDetails,
     getSuppliers,
+    getSupplierCatalogs,
     getSupplierDetails,
     getInvoices,
+    getSaleCatalogs,
     getInvoiceDetails,
 
     // Peticiones POST
@@ -34,72 +40,85 @@ const router = Router();
 
 // ==================== Peticiones GET ==================== //
 
-// Clientes.
-router.get('/getCustomers', getCustomers);
+// Estado de la API.
+router.get('/health', getApiHealth);
 
-router.get('/getCustomerDetails/:CustomerID', getCustomerDetails);
+// Clientes.
+router.get('/customers', getCustomers);
+
+router.get('/customers/catalogs', getCustomerCatalogs);
+
+router.get('/cities', getCities);
+
+router.get('/customers/:CustomerID', getCustomerDetails);
 
 // Inventarios.
-router.get('/getInventories', getInventories);
+router.get('/inventory', getInventories);
 
-router.get('/getInventoryDetails/:StockItemID', getInventoryDetails);
+router.get('/inventory/catalogs', getInventoryCatalogs);
+
+router.get('/inventory/:StockItemID', getInventoryDetails);
 
 // Proveedores.
-router.get('/getSuppliers', getSuppliers);
+router.get('/suppliers', getSuppliers);
 
-router.get('/getSupplierDetails/:SupplierID', getSupplierDetails);
+router.get('/suppliers/catalogs', getSupplierCatalogs);
+
+router.get('/suppliers/:SupplierID', getSupplierDetails);
 
 // Ventas.
-router.get('/getInvoices', getInvoices);
+router.get('/sales', getInvoices);
 
-router.get('/getInvoiceDetails/:InvoiceID', getInvoiceDetails);
+router.get('/sales/catalogs', getSaleCatalogs);
+
+router.get('/sales/:InvoiceID', getInvoiceDetails);
 // ======================================================== //
 
 // ==================== Peticiones POST ==================== //
 
 // Clientes.
-router.post('/createCustomer', createCustomer);
+router.post('/customers', createCustomer);
 
 // Inventarios.
-router.post('/createInventory', createInventory);
+router.post('/inventory', createInventory);
 
 // Proveedores.
-router.post('/createSupplier', createSupplier);
+router.post('/suppliers', createSupplier);
 
 // Ventas.
-router.post('/createSale', createSale);
+router.post('/sales', createSale);
 
 // ========================================================= //
 
 // ==================== Peticiones PUT ==================== //
 
 // Clientes.
-router.put('/updateCustomer/:CustomerID', updateCustomer);
+router.put('/customers/:CustomerID', updateCustomer);
 
 // Inventarios.
-router.put('/updateInventory/:StockItemID', updateInventory);
+router.put('/inventory/:StockItemID', updateInventory);
 
 // Proveedores.
-router.put('/updateSupplier/:SupplierID', updateSupplier);
+router.put('/suppliers/:SupplierID', updateSupplier);
 
 // Ventas.
-router.put('/updateSale/:InvoiceID', updateSale);
+router.put('/sales/:InvoiceID', updateSale);
 
 // ======================================================== //
 
 // ==================== Peticiones DELETE ==================== //
 
 // Clientes.
-router.delete('/deleteCustomer/:CustomerID', deleteCustomer);
+router.delete('/customers/:CustomerID', deleteCustomer);
 
 // Inventarios.
-router.delete('/deleteInventory/:StockItemID', deleteInventory);
+router.delete('/inventory/:StockItemID', deleteInventory);
 
 // Proveedores.
-router.delete('/deleteSupplier/:SupplierID', deleteSupplier);
+router.delete('/suppliers/:SupplierID', deleteSupplier);
 
 // Ventas.
-router.delete('/deleteSale/:InvoiceID', deleteSale);
+router.delete('/sales/:InvoiceID', deleteSale);
 
 // =========================================================== //
 

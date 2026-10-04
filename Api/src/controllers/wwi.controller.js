@@ -1,27 +1,148 @@
 import { getConnection, sql } from '../database/connection.js';
 
+function getDatabaseErrorNumber(error) {
+    if (error.number) {
+        return error.number;
+    }
+
+    if (error.originalError && error.originalError.info) {
+        return error.originalError.info.number;
+    }
+
+    return null;
+}
+
+function sendDatabaseError(res, error) {
+    const errorNumber = getDatabaseErrorNumber(error);
+
+    if (errorNumber === 50001) {
+        return res.status(400).json({ error: error.message });
+    }
+
+    if (errorNumber === 50002) {
+        return res.status(404).json({ error: error.message });
+    }
+
+    if (errorNumber === 50101) {
+        return res.status(400).json({ error: error.message });
+    }
+
+    if (errorNumber === 50102) {
+        return res.status(404).json({ error: error.message });
+    }
+
+    if (errorNumber === 50201) {
+        return res.status(404).json({ error: error.message });
+    }
+
+    if (errorNumber === 50202) {
+        return res.status(409).json({ error: error.message });
+    }
+
+    if (errorNumber === 50203) {
+        return res.status(400).json({ error: error.message });
+    }
+
+    if (errorNumber === 50301) {
+        return res.status(404).json({ error: error.message });
+    }
+
+    if (errorNumber === 50302) {
+        return res.status(404).json({ error: error.message });
+    }
+
+    if (errorNumber === 50303 || errorNumber === 50304) {
+        return res.status(400).json({ error: error.message });
+    }
+
+    if (errorNumber === 547) {
+        return res.status(409).json({
+            error: 'No se puede realizar la operación porque existen registros relacionados.'
+        });
+    }
+
+    if (errorNumber === 2601 || errorNumber === 2627) {
+        return res.status(409).json({ error: 'Ya existe un registro con esos datos.' });
+    }
+
+    return res.status(500).json({ error: error.message });
+}
+
 // ==================== Peticiones GET ==================== //
+
+// Estado de la API.
+export const getApiHealth = async (req, res) => {
+    try {
+        await getConnection();
+        res.json({ message: 'API y base de datos disponibles' });
+
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
 
 // Clientes.
 export const getCustomers = async (req, res) => {
     try {
-        const { CustomerName } = req.body;
-        const { CustomerCategoryID } = req.body;
-        const { DeliveryMethodID } = req.body;
+        const CustomerName = req.query.CustomerName || null;
+        const CustomerCategoryID = req.query.CustomerCategoryID || null;
+        const DeliveryMethodID = req.query.DeliveryMethodID || null;
 
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('CustomerName', CustomerName)
-        .input('CustomerCategoryID', CustomerCategoryID)
-        .input('DeliveryMethodID', DeliveryMethodID)
+        .input('CustomerName', sql.NVarChar(100), CustomerName)
+        .input('CustomerCategoryID', sql.Int, CustomerCategoryID)
+        .input('DeliveryMethodID', sql.Int, DeliveryMethodID)
         .execute('dbo.usp_Clientes_Listar');
 
         res.json(result.recordset);
 
     } catch (error) {
-        console.error('Error founded:', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getCustomerCatalogs = async (req, res) => {
+    try {
+        const pool = await getConnection();
+
+        const result = await pool.request()
+        .execute('dbo.usp_Clientes_ObtenerCatalogos');
+
+        res.json({
+            customerCategories: result.recordsets[0],
+            buyingGroups: result.recordsets[1],
+            people: result.recordsets[2],
+            deliveryMethods: result.recordsets[3],
+            customers: result.recordsets[4]
+        });
+
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getCities = async (req, res) => {
+    try {
+        const CityName = req.query.name || null;
+        const CityID = req.query.id || null;
+
+        const pool = await getConnection();
+
+        const result = await pool.request()
+        .input('CityName', sql.NVarChar(50), CityName)
+        .input('CityID', sql.Int, CityID)
+        .execute('dbo.usp_Ciudades_Buscar');
+
+        res.json(result.recordset);
+
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -32,39 +153,65 @@ export const getCustomerDetails = async (req, res) => {
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('CustomerID', CustomerID)
+        .input('CustomerID', sql.Int, CustomerID)
         .execute('dbo.usp_Clientes_ObtenerDetalle');
 
-        res.json(result.recordset);
+        const customer = result.recordset[0];
+
+        if (!customer) {
+            return res.status(404).json({ error: 'El cliente no existe.' });
+        }
+
+        res.json(customer);
 
     } catch (error) {
-        console.error('Error founded:', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
 // Inventarios.
 export const getInventories = async (req, res) => {
     try {
-        const { StockItemName } = req.body;
-        const { StockGroupID }  = req.body;
-        const { MinimumQuantityOnHand }  = req.body;
-        const { MaximumQuantityOnHand } = req.body;
+        const StockItemName = req.query.StockItemName || null;
+        const StockGroupID = req.query.StockGroupID || null;
+        const MinimumQuantityOnHand = req.query.MinimumQuantityOnHand || null;
+        const MaximumQuantityOnHand = req.query.MaximumQuantityOnHand || null;
 
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('StockItemName', StockItemName)
-        .input('StockGroupID', StockGroupID)
-        .input('MinimumQuantityOnHand', MinimumQuantityOnHand)
-        .input('MaximumQuantityOnHand', MaximumQuantityOnHand)
+        .input('StockItemName', sql.NVarChar(100), StockItemName)
+        .input('StockGroupID', sql.Int, StockGroupID)
+        .input('MinimumQuantityOnHand', sql.Int, MinimumQuantityOnHand)
+        .input('MaximumQuantityOnHand', sql.Int, MaximumQuantityOnHand)
         .execute('dbo.usp_Inventarios_Listar');
 
         res.json(result.recordset);
 
     } catch (error) {
-        console.error('Error founded:', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getInventoryCatalogs = async (req, res) => {
+    try {
+        const pool = await getConnection();
+
+        const result = await pool.request()
+        .execute('dbo.usp_Inventarios_ObtenerCatalogos');
+
+        res.json({
+            suppliers: result.recordsets[0],
+            stockGroups: result.recordsets[1],
+            colors: result.recordsets[2],
+            packageTypes: result.recordsets[3]
+        });
+
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -75,37 +222,62 @@ export const getInventoryDetails = async (req, res) => {
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('StockItemID', StockItemID)
+        .input('StockItemID', sql.Int, StockItemID)
         .execute('dbo.usp_Inventarios_ObtenerDetalle');
 
-        res.json(result.recordset);
+        const inventory = result.recordset[0];
+
+        if (!inventory) {
+            return res.status(404).json({ error: 'El producto no existe.' });
+        }
+
+        res.json(inventory);
 
     } catch (error) {
-        console.error('Error founded:', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
 // Proveedores.
 export const getSuppliers = async (req, res) => {
     try {
-        const { SupplierName } = req.body;
-        const { SupplierCategoryID } = req.body;
-        const { DeliveryMethodID } = req.body;
+        const SupplierName = req.query.SupplierName || null;
+        const SupplierCategoryID = req.query.SupplierCategoryID || null;
+        const DeliveryMethodID = req.query.DeliveryMethodID || null;
 
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('SupplierName', SupplierName)
-        .input('SupplierCategoryID', SupplierCategoryID)
-        .input('DeliveryMethodID', DeliveryMethodID)
+        .input('SupplierName', sql.NVarChar(100), SupplierName)
+        .input('SupplierCategoryID', sql.Int, SupplierCategoryID)
+        .input('DeliveryMethodID', sql.Int, DeliveryMethodID)
         .execute('dbo.usp_Proveedores_Listar');
 
         res.json(result.recordset);
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getSupplierCatalogs = async (req, res) => {
+    try {
+        const pool = await getConnection();
+
+        const result = await pool.request()
+        .execute('dbo.usp_Proveedores_ObtenerCatalogos');
+
+        res.json({
+            supplierCategories: result.recordsets[0],
+            people: result.recordsets[1],
+            deliveryMethods: result.recordsets[2]
+        });
+
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -116,43 +288,69 @@ export const getSupplierDetails = async (req, res) => {
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('SupplierID', SupplierID)
+        .input('SupplierID', sql.Int, SupplierID)
         .execute('dbo.usp_Proveedores_ObtenerDetalle');
 
-        res.json(result.recordset);
+        const supplier = result.recordset[0];
+
+        if (!supplier) {
+            return res.status(404).json({ error: 'El proveedor no existe.' });
+        }
+
+        res.json(supplier);
 
     } catch (error) {
-        console.error('Error founded', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
 // Ventas.
 export const getInvoices = async (req, res) => {
     try {
-        const { CustomerName } = req.body;
-        const { InvoiceDateFrom } = req.body;
-        const { InvoiceDateTo } = req.body;
-        const { MinimumInvoiceAmount } = req.body;
-        const { MaximumInvoiceAmount } = req.body;
-        const { DeliveryMethodID } = req.body;
+        const CustomerName = req.query.CustomerName || null;
+        const InvoiceDateFrom = req.query.InvoiceDateFrom || null;
+        const InvoiceDateTo = req.query.InvoiceDateTo || null;
+        const MinimumInvoiceAmount = req.query.MinimumInvoiceAmount || null;
+        const MaximumInvoiceAmount = req.query.MaximumInvoiceAmount || null;
+        const DeliveryMethodID = req.query.DeliveryMethodID || null;
 
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('CustomerName', CustomerName)
-        .input('InvoiceDateFrom', InvoiceDateFrom)
-        .input('InvoiceDateTo', InvoiceDateTo)
-        .input('MinimumInvoiceAmount', MinimumInvoiceAmount)
-        .input('MaximumInvoiceAmount', MaximumInvoiceAmount)
-        .input('DeliveryMethodID', DeliveryMethodID)
+        .input('CustomerName', sql.NVarChar(100), CustomerName)
+        .input('InvoiceDateFrom', sql.Date, InvoiceDateFrom)
+        .input('InvoiceDateTo', sql.Date, InvoiceDateTo)
+        .input('MinimumInvoiceAmount', sql.Decimal(18, 2), MinimumInvoiceAmount)
+        .input('MaximumInvoiceAmount', sql.Decimal(18, 2), MaximumInvoiceAmount)
+        .input('DeliveryMethodID', sql.Int, DeliveryMethodID)
         .execute('dbo.usp_Ventas_Listar');
 
         res.json(result.recordset);
         
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getSaleCatalogs = async (req, res) => {
+    try {
+        const pool = await getConnection();
+
+        const result = await pool.request()
+        .execute('dbo.usp_Ventas_ObtenerCatalogos');
+
+        res.json({
+            customers: result.recordsets[0],
+            people: result.recordsets[1],
+            deliveryMethods: result.recordsets[2],
+            products: result.recordsets[3]
+        });
+
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -163,14 +361,23 @@ export const getInvoiceDetails = async (req, res) => {
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('InvoiceID', InvoiceID)
+        .input('InvoiceID', sql.Int, InvoiceID)
         .execute('dbo.usp_Ventas_ObtenerDetalle');
 
-        res.json(result.recordset);
+        const invoice = result.recordsets[0][0];
+
+        if (!invoice) {
+            return res.status(404).json({ error: 'La venta no existe.' });
+        }
+
+        res.json({
+            invoice: invoice,
+            lines: result.recordsets[1]
+        });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -214,45 +421,45 @@ export const createCustomer = async (req, res) => {
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('CustomerName', CustomerName)
-        .input('CustomerCategoryID', CustomerCategoryID)
-        .input('PrimaryContactPersonID', PrimaryContactPersonID)
-        .input('DeliveryMethodID', DeliveryMethodID)
-        .input('DeliveryCityID', DeliveryCityID)
-        .input('PostalCityID', PostalCityID)
-        .input('AccountOpenedDate', AccountOpenedDate)
-        .input('StandardDiscountPercentage', StandardDiscountPercentage)
-        .input('IsStatementSent', IsStatementSent)
-        .input('IsOnCreditHold', IsOnCreditHold)
-        .input('PaymentDays', PaymentDays)
-        .input('PhoneNumber', PhoneNumber)
-        .input('FaxNumber', FaxNumber)
-        .input('WebsiteURL', WebsiteURL)
-        .input('DeliveryAddressLine1', DeliveryAddressLine1)
-        .input('DeliveryPostalCode', DeliveryPostalCode)
-        .input('PostalAddressLine1', PostalAddressLine1)
-        .input('PostalPostalCode', PostalPostalCode)
-        .input('LastEditedBy', LastEditedBy)
-        .input('BillToCustomerID', BillToCustomerID)
-        .input('BuyingGroupID', BuyingGroupID)
-        .input('AlternateContactPersonID', AlternateContactPersonID)
-        .input('CreditLimit', CreditLimit)
-        .input('DeliveryRun', DeliveryRun)
-        .input('RunPosition', RunPosition)
-        .input('DeliveryAddressLine2', DeliveryAddressLine2)
-        .input('DeliveryLatitude', DeliveryLatitude)
-        .input('DeliveryLongitude', DeliveryLongitude)
-        .input('PostalAddressLine2', PostalAddressLine2)
+        .input('CustomerName', sql.NVarChar(100), CustomerName)
+        .input('CustomerCategoryID', sql.Int, CustomerCategoryID)
+        .input('PrimaryContactPersonID', sql.Int, PrimaryContactPersonID)
+        .input('DeliveryMethodID', sql.Int, DeliveryMethodID)
+        .input('DeliveryCityID', sql.Int, DeliveryCityID)
+        .input('PostalCityID', sql.Int, PostalCityID)
+        .input('AccountOpenedDate', sql.Date, AccountOpenedDate)
+        .input('StandardDiscountPercentage', sql.Decimal(18, 3), StandardDiscountPercentage)
+        .input('IsStatementSent', sql.Bit, IsStatementSent)
+        .input('IsOnCreditHold', sql.Bit, IsOnCreditHold)
+        .input('PaymentDays', sql.Int, PaymentDays)
+        .input('PhoneNumber', sql.NVarChar(20), PhoneNumber)
+        .input('FaxNumber', sql.NVarChar(20), FaxNumber)
+        .input('WebsiteURL', sql.NVarChar(256), WebsiteURL)
+        .input('DeliveryAddressLine1', sql.NVarChar(60), DeliveryAddressLine1)
+        .input('DeliveryPostalCode', sql.NVarChar(10), DeliveryPostalCode)
+        .input('PostalAddressLine1', sql.NVarChar(60), PostalAddressLine1)
+        .input('PostalPostalCode', sql.NVarChar(10), PostalPostalCode)
+        .input('LastEditedBy', sql.Int, LastEditedBy)
+        .input('BillToCustomerID', sql.Int, BillToCustomerID)
+        .input('BuyingGroupID', sql.Int, BuyingGroupID)
+        .input('AlternateContactPersonID', sql.Int, AlternateContactPersonID)
+        .input('CreditLimit', sql.Decimal(18, 2), CreditLimit)
+        .input('DeliveryRun', sql.NVarChar(5), DeliveryRun)
+        .input('RunPosition', sql.NVarChar(5), RunPosition)
+        .input('DeliveryAddressLine2', sql.NVarChar(60), DeliveryAddressLine2)
+        .input('DeliveryLatitude', sql.Decimal(9, 6), DeliveryLatitude)
+        .input('DeliveryLongitude', sql.Decimal(9, 6), DeliveryLongitude)
+        .input('PostalAddressLine2', sql.NVarChar(60), PostalAddressLine2)
         .execute('dbo.usp_Clientes_Crear');
 
-        res.json({
-            message: 'Registry created',
+        res.status(201).json({
+            message: 'Cliente creado correctamente',
             newId: result.recordset[0].CustomerID
         });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -287,49 +494,52 @@ export const createInventory = async (req, res) => {
         const { CustomFields } = req.body;
         const { StockGroupID } = req.body;
 
-        // Casting del objeto Photo para evitar errores de tipo en la columna
-        const PhotoData = Photo ? Buffer.from(Photo, 'base64') : null;
+        let PhotoData = null;
+
+        if (Photo) {
+            PhotoData = Buffer.from(Photo, 'base64');
+        }
 
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('StockItemName', StockItemName)
-        .input('SupplierID', SupplierID)
-        .input('UnitPackageID', UnitPackageID)
-        .input('OuterPackageID', OuterPackageID)
-        .input('LeadTimeDays', LeadTimeDays)
-        .input('QuantityPerOuter', QuantityPerOuter)
-        .input('IsChillerStock', IsChillerStock)
-        .input('TaxRate', TaxRate)
-        .input('UnitPrice', UnitPrice)
-        .input('TypicalWeightPerUnit', TypicalWeightPerUnit)
-        .input('QuantityOnHand', QuantityOnHand)
-        .input('BinLocation', BinLocation)
-        .input('LastStocktakeQuantity', LastStocktakeQuantity)
-        .input('LastCostPrice', LastCostPrice)
-        .input('ReorderLevel', ReorderLevel)
-        .input('TargetStockLevel', TargetStockLevel)
-        .input('LastEditedBy', LastEditedBy)
-        .input('ColorID', ColorID)
-        .input('Brand', Brand)
-        .input('Size', Size)
-        .input('Barcode', Barcode)
-        .input('RecommendedRetailPrice', RecommendedRetailPrice)
-        .input('MarketingComments', MarketingComments)
-        .input('InternalComments', InternalComments)
+        .input('StockItemName', sql.NVarChar(100), StockItemName)
+        .input('SupplierID', sql.Int, SupplierID)
+        .input('UnitPackageID', sql.Int, UnitPackageID)
+        .input('OuterPackageID', sql.Int, OuterPackageID)
+        .input('LeadTimeDays', sql.Int, LeadTimeDays)
+        .input('QuantityPerOuter', sql.Int, QuantityPerOuter)
+        .input('IsChillerStock', sql.Bit, IsChillerStock)
+        .input('TaxRate', sql.Decimal(18, 3), TaxRate)
+        .input('UnitPrice', sql.Decimal(18, 2), UnitPrice)
+        .input('TypicalWeightPerUnit', sql.Decimal(18, 3), TypicalWeightPerUnit)
+        .input('QuantityOnHand', sql.Int, QuantityOnHand)
+        .input('BinLocation', sql.NVarChar(20), BinLocation)
+        .input('LastStocktakeQuantity', sql.Int, LastStocktakeQuantity)
+        .input('LastCostPrice', sql.Decimal(18, 2), LastCostPrice)
+        .input('ReorderLevel', sql.Int, ReorderLevel)
+        .input('TargetStockLevel', sql.Int, TargetStockLevel)
+        .input('LastEditedBy', sql.Int, LastEditedBy)
+        .input('ColorID', sql.Int, ColorID)
+        .input('Brand', sql.NVarChar(50), Brand)
+        .input('Size', sql.NVarChar(20), Size)
+        .input('Barcode', sql.NVarChar(50), Barcode)
+        .input('RecommendedRetailPrice', sql.Decimal(18, 2), RecommendedRetailPrice)
+        .input('MarketingComments', sql.NVarChar(sql.MAX), MarketingComments)
+        .input('InternalComments', sql.NVarChar(sql.MAX), InternalComments)
         .input('Photo', sql.VarBinary(sql.MAX), PhotoData)
-        .input('CustomFields', CustomFields)
-        .input('StockGroupID', StockGroupID)
+        .input('CustomFields', sql.NVarChar(sql.MAX), CustomFields)
+        .input('StockGroupID', sql.Int, StockGroupID)
         .execute('dbo.usp_Inventarios_Crear');
 
-        res.json({
-            message: 'Registry created',
+        res.status(201).json({
+            message: 'Producto creado correctamente',
             newId: result.recordset[0].StockItemID
         });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -367,43 +577,43 @@ export const createSupplier = async (req, res) => {
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('SupplierName', SupplierName)
-        .input('SupplierCategoryID', SupplierCategoryID)
-        .input('PrimaryContactPersonID', PrimaryContactPersonID)
-        .input('AlternateContactPersonID', AlternateContactPersonID)
-        .input('DeliveryCityID', DeliveryCityID)
-        .input('PostalCityID', PostalCityID)
-        .input('PaymentDays', PaymentDays)
-        .input('PhoneNumber', PhoneNumber)
-        .input('FaxNumber', FaxNumber)
-        .input('WebsiteURL', WebsiteURL)
-        .input('DeliveryAddressLine1', DeliveryAddressLine1)
-        .input('DeliveryPostalCode', DeliveryPostalCode)
-        .input('PostalAddressLine1', PostalAddressLine1)
-        .input('PostalPostalCode', PostalPostalCode)
-        .input('LastEditedBy', LastEditedBy)
-        .input('DeliveryMethodID', DeliveryMethodID)
-        .input('SupplierReference', SupplierReference)
-        .input('BankAccountName', BankAccountName)
-        .input('BankAccountBranch', BankAccountBranch)
-        .input('BankAccountCode', BankAccountCode)
-        .input('BankAccountNumber', BankAccountNumber)
-        .input('BankInternationalCode', BankInternationalCode)
-        .input('InternalComments', InternalComments)
-        .input('DeliveryAddressLine2', DeliveryAddressLine2)
-        .input('DeliveryLatitude', DeliveryLatitude)
-        .input('DeliveryLongitude', DeliveryLongitude)
-        .input('PostalAddressLine2', PostalAddressLine2)
+        .input('SupplierName', sql.NVarChar(100), SupplierName)
+        .input('SupplierCategoryID', sql.Int, SupplierCategoryID)
+        .input('PrimaryContactPersonID', sql.Int, PrimaryContactPersonID)
+        .input('AlternateContactPersonID', sql.Int, AlternateContactPersonID)
+        .input('DeliveryCityID', sql.Int, DeliveryCityID)
+        .input('PostalCityID', sql.Int, PostalCityID)
+        .input('PaymentDays', sql.Int, PaymentDays)
+        .input('PhoneNumber', sql.NVarChar(20), PhoneNumber)
+        .input('FaxNumber', sql.NVarChar(20), FaxNumber)
+        .input('WebsiteURL', sql.NVarChar(256), WebsiteURL)
+        .input('DeliveryAddressLine1', sql.NVarChar(60), DeliveryAddressLine1)
+        .input('DeliveryPostalCode', sql.NVarChar(10), DeliveryPostalCode)
+        .input('PostalAddressLine1', sql.NVarChar(60), PostalAddressLine1)
+        .input('PostalPostalCode', sql.NVarChar(10), PostalPostalCode)
+        .input('LastEditedBy', sql.Int, LastEditedBy)
+        .input('DeliveryMethodID', sql.Int, DeliveryMethodID)
+        .input('SupplierReference', sql.NVarChar(20), SupplierReference)
+        .input('BankAccountName', sql.NVarChar(50), BankAccountName)
+        .input('BankAccountBranch', sql.NVarChar(50), BankAccountBranch)
+        .input('BankAccountCode', sql.NVarChar(20), BankAccountCode)
+        .input('BankAccountNumber', sql.NVarChar(20), BankAccountNumber)
+        .input('BankInternationalCode', sql.NVarChar(20), BankInternationalCode)
+        .input('InternalComments', sql.NVarChar(sql.MAX), InternalComments)
+        .input('DeliveryAddressLine2', sql.NVarChar(60), DeliveryAddressLine2)
+        .input('DeliveryLatitude', sql.Decimal(9, 6), DeliveryLatitude)
+        .input('DeliveryLongitude', sql.Decimal(9, 6), DeliveryLongitude)
+        .input('PostalAddressLine2', sql.NVarChar(60), PostalAddressLine2)
         .execute('dbo.usp_Proveedores_Crear');
 
-        res.json({
-            message: 'Registry created',
+        res.status(201).json({
+            message: 'Proveedor creado correctamente',
             newId: result.recordset[0].SupplierID
         });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -421,51 +631,62 @@ export const createSale = async (req, res) => {
         const { LastEditedBy } = req.body;
         const { OrderID } = req.body;
         const { CustomerPurchaseOrderNumber } = req.body;
-        const { IsCreditNote = 0 } = req.body;
+        const { IsCreditNote } = req.body;
         const { CreditNoteReason } = req.body;
         const { Comments } = req.body;
         const { DeliveryInstructions } = req.body;
         const { InternalComments } = req.body;
-        const { TotalDryItems = 0 } = req.body;
-        const { TotalChillerItems = 0 } = req.body;
         const { DeliveryRun } = req.body;
         const { RunPosition } = req.body;
         const { ReturnedDeliveryData } = req.body;
+        const { Lines } = req.body;
+
+        let IsCreditNoteValue = false;
+        let InvoiceLines = '[]';
+
+        if (IsCreditNote === true || IsCreditNote === 1) {
+            IsCreditNoteValue = true;
+        }
+
+        if (Array.isArray(Lines)) {
+            InvoiceLines = JSON.stringify(Lines);
+        }
 
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('CustomerID', CustomerID)
-        .input('BillToCustomerID', BillToCustomerID)
-        .input('DeliveryMethodID', DeliveryMethodID)
-        .input('ContactPersonID', ContactPersonID)
-        .input('AccountsPersonID', AccountsPersonID)
-        .input('SalespersonPersonID', SalespersonPersonID)
-        .input('PackedByPersonID', PackedByPersonID)
-        .input('InvoiceDate', InvoiceDate)
-        .input('LastEditedBy', LastEditedBy)
-        .input('OrderID', OrderID)
-        .input('CustomerPurchaseOrderNumber', CustomerPurchaseOrderNumber)
-        .input('IsCreditNote', IsCreditNote)
-        .input('CreditNoteReason', CreditNoteReason)
-        .input('Comments', Comments)
-        .input('DeliveryInstructions', DeliveryInstructions)
-        .input('InternalComments', InternalComments)
-        .input('TotalDryItems', TotalDryItems)
-        .input('TotalChillerItems', TotalChillerItems)
-        .input('DeliveryRun', DeliveryRun)
-        .input('RunPosition', RunPosition)
-        .input('ReturnedDeliveryData', ReturnedDeliveryData)
+        .input('CustomerID', sql.Int, CustomerID)
+        .input('BillToCustomerID', sql.Int, BillToCustomerID)
+        .input('DeliveryMethodID', sql.Int, DeliveryMethodID)
+        .input('ContactPersonID', sql.Int, ContactPersonID)
+        .input('AccountsPersonID', sql.Int, AccountsPersonID)
+        .input('SalespersonPersonID', sql.Int, SalespersonPersonID)
+        .input('PackedByPersonID', sql.Int, PackedByPersonID)
+        .input('InvoiceDate', sql.Date, InvoiceDate)
+        .input('LastEditedBy', sql.Int, LastEditedBy)
+        .input('OrderID', sql.Int, OrderID)
+        .input('CustomerPurchaseOrderNumber', sql.NVarChar(20), CustomerPurchaseOrderNumber)
+        .input('IsCreditNote', sql.Bit, IsCreditNoteValue)
+        .input('CreditNoteReason', sql.NVarChar(sql.MAX), CreditNoteReason)
+        .input('Comments', sql.NVarChar(sql.MAX), Comments)
+        .input('DeliveryInstructions', sql.NVarChar(sql.MAX), DeliveryInstructions)
+        .input('InternalComments', sql.NVarChar(sql.MAX), InternalComments)
+        .input('TotalDryItems', sql.Int, 0)
+        .input('TotalChillerItems', sql.Int, 0)
+        .input('DeliveryRun', sql.NVarChar(5), DeliveryRun)
+        .input('RunPosition', sql.NVarChar(5), RunPosition)
+        .input('ReturnedDeliveryData', sql.NVarChar(sql.MAX), ReturnedDeliveryData)
+        .input('InvoiceLines', sql.NVarChar(sql.MAX), InvoiceLines)
         .execute('dbo.usp_Ventas_Crear');
 
-        res.json({
-            message: 'Registry created',
+        res.status(201).json({
+            message: 'Venta creada correctamente',
             newId: result.recordset[0].InvoiceID
         });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -510,46 +731,46 @@ export const updateCustomer = async (req, res) => {
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('CustomerID', CustomerID)
-        .input('CustomerName', CustomerName)
-        .input('CustomerCategoryID', CustomerCategoryID)
-        .input('PrimaryContactPersonID', PrimaryContactPersonID)
-        .input('DeliveryMethodID', DeliveryMethodID)
-        .input('DeliveryCityID', DeliveryCityID)
-        .input('PostalCityID', PostalCityID)
-        .input('AccountOpenedDate', AccountOpenedDate)
-        .input('StandardDiscountPercentage', StandardDiscountPercentage)
-        .input('IsStatementSent', IsStatementSent)
-        .input('IsOnCreditHold', IsOnCreditHold)
-        .input('PaymentDays', PaymentDays)
-        .input('PhoneNumber', PhoneNumber)
-        .input('FaxNumber', FaxNumber)
-        .input('WebsiteURL', WebsiteURL)
-        .input('DeliveryAddressLine1', DeliveryAddressLine1)
-        .input('DeliveryPostalCode', DeliveryPostalCode)
-        .input('PostalAddressLine1', PostalAddressLine1)
-        .input('PostalPostalCode', PostalPostalCode)
-        .input('LastEditedBy', LastEditedBy)
-        .input('BillToCustomerID', BillToCustomerID)
-        .input('BuyingGroupID', BuyingGroupID)
-        .input('AlternateContactPersonID', AlternateContactPersonID)
-        .input('CreditLimit', CreditLimit)
-        .input('DeliveryRun', DeliveryRun)
-        .input('RunPosition', RunPosition)
-        .input('DeliveryAddressLine2', DeliveryAddressLine2)
-        .input('DeliveryLatitude', DeliveryLatitude)
-        .input('DeliveryLongitude', DeliveryLongitude)
-        .input('PostalAddressLine2', PostalAddressLine2)
+        .input('CustomerID', sql.Int, CustomerID)
+        .input('CustomerName', sql.NVarChar(100), CustomerName)
+        .input('CustomerCategoryID', sql.Int, CustomerCategoryID)
+        .input('PrimaryContactPersonID', sql.Int, PrimaryContactPersonID)
+        .input('DeliveryMethodID', sql.Int, DeliveryMethodID)
+        .input('DeliveryCityID', sql.Int, DeliveryCityID)
+        .input('PostalCityID', sql.Int, PostalCityID)
+        .input('AccountOpenedDate', sql.Date, AccountOpenedDate)
+        .input('StandardDiscountPercentage', sql.Decimal(18, 3), StandardDiscountPercentage)
+        .input('IsStatementSent', sql.Bit, IsStatementSent)
+        .input('IsOnCreditHold', sql.Bit, IsOnCreditHold)
+        .input('PaymentDays', sql.Int, PaymentDays)
+        .input('PhoneNumber', sql.NVarChar(20), PhoneNumber)
+        .input('FaxNumber', sql.NVarChar(20), FaxNumber)
+        .input('WebsiteURL', sql.NVarChar(256), WebsiteURL)
+        .input('DeliveryAddressLine1', sql.NVarChar(60), DeliveryAddressLine1)
+        .input('DeliveryPostalCode', sql.NVarChar(10), DeliveryPostalCode)
+        .input('PostalAddressLine1', sql.NVarChar(60), PostalAddressLine1)
+        .input('PostalPostalCode', sql.NVarChar(10), PostalPostalCode)
+        .input('LastEditedBy', sql.Int, LastEditedBy)
+        .input('BillToCustomerID', sql.Int, BillToCustomerID)
+        .input('BuyingGroupID', sql.Int, BuyingGroupID)
+        .input('AlternateContactPersonID', sql.Int, AlternateContactPersonID)
+        .input('CreditLimit', sql.Decimal(18, 2), CreditLimit)
+        .input('DeliveryRun', sql.NVarChar(5), DeliveryRun)
+        .input('RunPosition', sql.NVarChar(5), RunPosition)
+        .input('DeliveryAddressLine2', sql.NVarChar(60), DeliveryAddressLine2)
+        .input('DeliveryLatitude', sql.Decimal(9, 6), DeliveryLatitude)
+        .input('DeliveryLongitude', sql.Decimal(9, 6), DeliveryLongitude)
+        .input('PostalAddressLine2', sql.NVarChar(60), PostalAddressLine2)
         .execute('dbo.usp_Clientes_Actualizar');
 
         res.json({
-            message: 'Registry updated',
-            updatedId: result.recordset[0].CustomerID
+            message: 'Cliente actualizado correctamente',
+            id: result.recordset[0].CustomerID
         });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -583,48 +804,52 @@ export const updateInventory = async (req, res) => {
         const { InternalComments } = req.body;
         const { Photo } = req.body;
         const { CustomFields } = req.body;
-        const PhotoData = Photo ? Buffer.from(Photo, 'base64') : null;
+        let PhotoData = null;
+
+        if (Photo) {
+            PhotoData = Buffer.from(Photo, 'base64');
+        }
 
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('StockItemID', StockItemID)
-        .input('StockItemName', StockItemName)
-        .input('SupplierID', SupplierID)
-        .input('UnitPackageID', UnitPackageID)
-        .input('OuterPackageID', OuterPackageID)
-        .input('LeadTimeDays', LeadTimeDays)
-        .input('QuantityPerOuter', QuantityPerOuter)
-        .input('IsChillerStock', IsChillerStock)
-        .input('TaxRate', TaxRate)
-        .input('UnitPrice', UnitPrice)
-        .input('TypicalWeightPerUnit', TypicalWeightPerUnit)
-        .input('QuantityOnHand', QuantityOnHand)
-        .input('BinLocation', BinLocation)
-        .input('LastStocktakeQuantity', LastStocktakeQuantity)
-        .input('LastCostPrice', LastCostPrice)
-        .input('ReorderLevel', ReorderLevel)
-        .input('TargetStockLevel', TargetStockLevel)
-        .input('LastEditedBy', LastEditedBy)
-        .input('ColorID', ColorID)
-        .input('Brand', Brand)
-        .input('Size', Size)
-        .input('Barcode', Barcode)
-        .input('RecommendedRetailPrice', RecommendedRetailPrice)
-        .input('MarketingComments', MarketingComments)
-        .input('InternalComments', InternalComments)
+        .input('StockItemID', sql.Int, StockItemID)
+        .input('StockItemName', sql.NVarChar(100), StockItemName)
+        .input('SupplierID', sql.Int, SupplierID)
+        .input('UnitPackageID', sql.Int, UnitPackageID)
+        .input('OuterPackageID', sql.Int, OuterPackageID)
+        .input('LeadTimeDays', sql.Int, LeadTimeDays)
+        .input('QuantityPerOuter', sql.Int, QuantityPerOuter)
+        .input('IsChillerStock', sql.Bit, IsChillerStock)
+        .input('TaxRate', sql.Decimal(18, 3), TaxRate)
+        .input('UnitPrice', sql.Decimal(18, 2), UnitPrice)
+        .input('TypicalWeightPerUnit', sql.Decimal(18, 3), TypicalWeightPerUnit)
+        .input('QuantityOnHand', sql.Int, QuantityOnHand)
+        .input('BinLocation', sql.NVarChar(20), BinLocation)
+        .input('LastStocktakeQuantity', sql.Int, LastStocktakeQuantity)
+        .input('LastCostPrice', sql.Decimal(18, 2), LastCostPrice)
+        .input('ReorderLevel', sql.Int, ReorderLevel)
+        .input('TargetStockLevel', sql.Int, TargetStockLevel)
+        .input('LastEditedBy', sql.Int, LastEditedBy)
+        .input('ColorID', sql.Int, ColorID)
+        .input('Brand', sql.NVarChar(50), Brand)
+        .input('Size', sql.NVarChar(20), Size)
+        .input('Barcode', sql.NVarChar(50), Barcode)
+        .input('RecommendedRetailPrice', sql.Decimal(18, 2), RecommendedRetailPrice)
+        .input('MarketingComments', sql.NVarChar(sql.MAX), MarketingComments)
+        .input('InternalComments', sql.NVarChar(sql.MAX), InternalComments)
         .input('Photo', sql.VarBinary(sql.MAX), PhotoData)
-        .input('CustomFields', CustomFields)
+        .input('CustomFields', sql.NVarChar(sql.MAX), CustomFields)
         .execute('dbo.usp_Inventarios_Actualizar');
 
         res.json({
-            message: 'Registry updated',
-            updatedId: result.recordset[0].StockItemID
+            message: 'Producto actualizado correctamente',
+            id: result.recordset[0].StockItemID
         });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -663,44 +888,44 @@ export const updateSupplier = async (req, res) => {
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('SupplierID', SupplierID)
-        .input('SupplierName', SupplierName)
-        .input('SupplierCategoryID', SupplierCategoryID)
-        .input('PrimaryContactPersonID', PrimaryContactPersonID)
-        .input('AlternateContactPersonID', AlternateContactPersonID)
-        .input('DeliveryCityID', DeliveryCityID)
-        .input('PostalCityID', PostalCityID)
-        .input('PaymentDays', PaymentDays)
-        .input('PhoneNumber', PhoneNumber)
-        .input('FaxNumber', FaxNumber)
-        .input('WebsiteURL', WebsiteURL)
-        .input('DeliveryAddressLine1', DeliveryAddressLine1)
-        .input('DeliveryPostalCode', DeliveryPostalCode)
-        .input('PostalAddressLine1', PostalAddressLine1)
-        .input('PostalPostalCode', PostalPostalCode)
-        .input('LastEditedBy', LastEditedBy)
-        .input('DeliveryMethodID', DeliveryMethodID)
-        .input('SupplierReference', SupplierReference)
-        .input('BankAccountName', BankAccountName)
-        .input('BankAccountBranch', BankAccountBranch)
-        .input('BankAccountCode', BankAccountCode)
-        .input('BankAccountNumber', BankAccountNumber)
-        .input('BankInternationalCode', BankInternationalCode)
-        .input('InternalComments', InternalComments)
-        .input('DeliveryAddressLine2', DeliveryAddressLine2)
-        .input('DeliveryLatitude', DeliveryLatitude)
-        .input('DeliveryLongitude', DeliveryLongitude)
-        .input('PostalAddressLine2', PostalAddressLine2)
+        .input('SupplierID', sql.Int, SupplierID)
+        .input('SupplierName', sql.NVarChar(100), SupplierName)
+        .input('SupplierCategoryID', sql.Int, SupplierCategoryID)
+        .input('PrimaryContactPersonID', sql.Int, PrimaryContactPersonID)
+        .input('AlternateContactPersonID', sql.Int, AlternateContactPersonID)
+        .input('DeliveryCityID', sql.Int, DeliveryCityID)
+        .input('PostalCityID', sql.Int, PostalCityID)
+        .input('PaymentDays', sql.Int, PaymentDays)
+        .input('PhoneNumber', sql.NVarChar(20), PhoneNumber)
+        .input('FaxNumber', sql.NVarChar(20), FaxNumber)
+        .input('WebsiteURL', sql.NVarChar(256), WebsiteURL)
+        .input('DeliveryAddressLine1', sql.NVarChar(60), DeliveryAddressLine1)
+        .input('DeliveryPostalCode', sql.NVarChar(10), DeliveryPostalCode)
+        .input('PostalAddressLine1', sql.NVarChar(60), PostalAddressLine1)
+        .input('PostalPostalCode', sql.NVarChar(10), PostalPostalCode)
+        .input('LastEditedBy', sql.Int, LastEditedBy)
+        .input('DeliveryMethodID', sql.Int, DeliveryMethodID)
+        .input('SupplierReference', sql.NVarChar(20), SupplierReference)
+        .input('BankAccountName', sql.NVarChar(50), BankAccountName)
+        .input('BankAccountBranch', sql.NVarChar(50), BankAccountBranch)
+        .input('BankAccountCode', sql.NVarChar(20), BankAccountCode)
+        .input('BankAccountNumber', sql.NVarChar(20), BankAccountNumber)
+        .input('BankInternationalCode', sql.NVarChar(20), BankInternationalCode)
+        .input('InternalComments', sql.NVarChar(sql.MAX), InternalComments)
+        .input('DeliveryAddressLine2', sql.NVarChar(60), DeliveryAddressLine2)
+        .input('DeliveryLatitude', sql.Decimal(9, 6), DeliveryLatitude)
+        .input('DeliveryLongitude', sql.Decimal(9, 6), DeliveryLongitude)
+        .input('PostalAddressLine2', sql.NVarChar(60), PostalAddressLine2)
         .execute('dbo.usp_Proveedores_Actualizar');
 
         res.json({
-            message: 'Registry updated',
-            updatedId: result.recordset[0].SupplierID
+            message: 'Proveedor actualizado correctamente',
+            id: result.recordset[0].SupplierID
         });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -719,52 +944,63 @@ export const updateSale = async (req, res) => {
         const { LastEditedBy } = req.body;
         const { OrderID } = req.body;
         const { CustomerPurchaseOrderNumber } = req.body;
-        const { IsCreditNote = 0 } = req.body;
+        const { IsCreditNote } = req.body;
         const { CreditNoteReason } = req.body;
         const { Comments } = req.body;
         const { DeliveryInstructions } = req.body;
         const { InternalComments } = req.body;
-        const { TotalDryItems = 0 } = req.body;
-        const { TotalChillerItems = 0 } = req.body;
         const { DeliveryRun } = req.body;
         const { RunPosition } = req.body;
         const { ReturnedDeliveryData } = req.body;
+        const { Lines } = req.body;
+
+        let IsCreditNoteValue = false;
+        let InvoiceLines = '[]';
+
+        if (IsCreditNote === true || IsCreditNote === 1) {
+            IsCreditNoteValue = true;
+        }
+
+        if (Array.isArray(Lines)) {
+            InvoiceLines = JSON.stringify(Lines);
+        }
 
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('InvoiceID', InvoiceID)
-        .input('CustomerID', CustomerID)
-        .input('BillToCustomerID', BillToCustomerID)
-        .input('DeliveryMethodID', DeliveryMethodID)
-        .input('ContactPersonID', ContactPersonID)
-        .input('AccountsPersonID', AccountsPersonID)
-        .input('SalespersonPersonID', SalespersonPersonID)
-        .input('PackedByPersonID', PackedByPersonID)
-        .input('InvoiceDate', InvoiceDate)
-        .input('LastEditedBy', LastEditedBy)
-        .input('OrderID', OrderID)
-        .input('CustomerPurchaseOrderNumber', CustomerPurchaseOrderNumber)
-        .input('IsCreditNote', IsCreditNote)
-        .input('CreditNoteReason', CreditNoteReason)
-        .input('Comments', Comments)
-        .input('DeliveryInstructions', DeliveryInstructions)
-        .input('InternalComments', InternalComments)
-        .input('TotalDryItems', TotalDryItems)
-        .input('TotalChillerItems', TotalChillerItems)
-        .input('DeliveryRun', DeliveryRun)
-        .input('RunPosition', RunPosition)
-        .input('ReturnedDeliveryData', ReturnedDeliveryData)
+        .input('InvoiceID', sql.Int, InvoiceID)
+        .input('CustomerID', sql.Int, CustomerID)
+        .input('BillToCustomerID', sql.Int, BillToCustomerID)
+        .input('DeliveryMethodID', sql.Int, DeliveryMethodID)
+        .input('ContactPersonID', sql.Int, ContactPersonID)
+        .input('AccountsPersonID', sql.Int, AccountsPersonID)
+        .input('SalespersonPersonID', sql.Int, SalespersonPersonID)
+        .input('PackedByPersonID', sql.Int, PackedByPersonID)
+        .input('InvoiceDate', sql.Date, InvoiceDate)
+        .input('LastEditedBy', sql.Int, LastEditedBy)
+        .input('OrderID', sql.Int, OrderID)
+        .input('CustomerPurchaseOrderNumber', sql.NVarChar(20), CustomerPurchaseOrderNumber)
+        .input('IsCreditNote', sql.Bit, IsCreditNoteValue)
+        .input('CreditNoteReason', sql.NVarChar(sql.MAX), CreditNoteReason)
+        .input('Comments', sql.NVarChar(sql.MAX), Comments)
+        .input('DeliveryInstructions', sql.NVarChar(sql.MAX), DeliveryInstructions)
+        .input('InternalComments', sql.NVarChar(sql.MAX), InternalComments)
+        .input('TotalDryItems', sql.Int, null)
+        .input('TotalChillerItems', sql.Int, null)
+        .input('DeliveryRun', sql.NVarChar(5), DeliveryRun)
+        .input('RunPosition', sql.NVarChar(5), RunPosition)
+        .input('ReturnedDeliveryData', sql.NVarChar(sql.MAX), ReturnedDeliveryData)
+        .input('InvoiceLines', sql.NVarChar(sql.MAX), InvoiceLines)
         .execute('dbo.usp_Ventas_Actualizar');
 
         res.json({
-            message: 'Registry updated',
-            updatedId: result.recordset[0].InvoiceID
+            message: 'Venta actualizada correctamente',
+            id: result.recordset[0].InvoiceID
         });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -780,17 +1016,17 @@ export const deleteCustomer = async (req, res) => {
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('CustomerID', CustomerID)
+        .input('CustomerID', sql.Int, CustomerID)
         .execute('dbo.usp_Clientes_Eliminar');
 
         res.json({
-            message: 'Registry deleted',
-            deletedId: result.recordset[0].CustomerID
+            message: 'Cliente eliminado correctamente',
+            id: result.recordset[0].CustomerID
         });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -802,17 +1038,17 @@ export const deleteInventory = async (req, res) => {
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('StockItemID', StockItemID)
+        .input('StockItemID', sql.Int, StockItemID)
         .execute('dbo.usp_Inventarios_Eliminar');
 
         res.json({
-            message: 'Registry deleted',
-            deletedId: result.recordset[0].StockItemID
+            message: 'Producto eliminado correctamente',
+            id: result.recordset[0].StockItemID
         });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -824,17 +1060,17 @@ export const deleteSupplier = async (req, res) => {
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('SupplierID', SupplierID)
+        .input('SupplierID', sql.Int, SupplierID)
         .execute('dbo.usp_Proveedores_Eliminar');
 
         res.json({
-            message: 'Registry deleted',
-            deletedId: result.recordset[0].SupplierID
+            message: 'Proveedor eliminado correctamente',
+            id: result.recordset[0].SupplierID
         });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 
@@ -846,17 +1082,17 @@ export const deleteSale = async (req, res) => {
         const pool = await getConnection();
 
         const result = await pool.request()
-        .input('InvoiceID', InvoiceID)
+        .input('InvoiceID', sql.Int, InvoiceID)
         .execute('dbo.usp_Ventas_Eliminar');
 
         res.json({
-            message: 'Registry deleted',
-            deletedId: result.recordset[0].InvoiceID
+            message: 'Venta eliminada correctamente',
+            id: result.recordset[0].InvoiceID
         });
 
     } catch (error) {
-        console.error('Error founded: ', error);
-        res.status(500).json({ error: error.message });
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
     }
 };
 

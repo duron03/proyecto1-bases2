@@ -92,18 +92,30 @@ BEGIN
             S.SupplierID,
             S.SupplierName,
             S.WebsiteURL AS SupplierWebsiteURL,
+            SI.ColorID,
             C.ColorName,
+            SI.UnitPackageID,
             UPT.PackageTypeName AS UnitPackageName,
+            SI.OuterPackageID,
             OPT.PackageTypeName AS OuterPackageName,
+            SI.LeadTimeDays,
             SI.QuantityPerOuter,
+            SI.IsChillerStock,
             SI.Brand,
             SI.Size,
+            SI.Barcode,
             SI.TaxRate,
             SI.UnitPrice,
             SI.RecommendedRetailPrice,
             SI.TypicalWeightPerUnit,
+            SI.MarketingComments,
             H.QuantityOnHand,
             H.BinLocation,
+            H.LastStocktakeQuantity,
+            H.LastCostPrice,
+            H.ReorderLevel,
+            H.TargetStockLevel,
+            SI.LastEditedBy,
             SI.SearchDetails AS KeyWords
         FROM dbo.src_Producto AS SI
         INNER JOIN dbo.src_Proveedor AS S
@@ -117,6 +129,50 @@ BEGIN
         INNER JOIN dbo.src_Existencia AS H
             ON SI.StockItemID = H.StockItemID
         WHERE SI.StockItemID = @StockItemID;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+        THROW;
+    END CATCH;
+END;
+GO
+
+-- Devuelve los catálogos pequeños utilizados en inventarios.
+CREATE OR ALTER PROCEDURE dbo.usp_Inventarios_ObtenerCatalogos
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        SELECT
+            SupplierID AS [Value],
+            SupplierName AS [Label]
+        FROM dbo.src_Proveedor
+        ORDER BY SupplierName ASC;
+
+        SELECT
+            StockGroupID AS [Value],
+            StockGroupName AS [Label]
+        FROM dbo.src_GrupoProducto
+        ORDER BY StockGroupName ASC;
+
+        SELECT
+            ColorID AS [Value],
+            ColorName AS [Label]
+        FROM dbo.src_Color
+        ORDER BY ColorName ASC;
+
+        SELECT
+            PackageTypeID AS [Value],
+            PackageTypeName AS [Label]
+        FROM dbo.src_TipoEmpaque
+        ORDER BY PackageTypeName ASC;
 
         COMMIT TRANSACTION;
     END TRY

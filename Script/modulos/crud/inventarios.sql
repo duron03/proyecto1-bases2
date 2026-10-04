@@ -206,9 +206,9 @@ BEGIN
             RecommendedRetailPrice = @RecommendedRetailPrice,
             TypicalWeightPerUnit = @TypicalWeightPerUnit,
             MarketingComments = @MarketingComments,
-            InternalComments = @InternalComments,
-            Photo = @Photo,
-            CustomFields = @CustomFields,
+            InternalComments = ISNULL(@InternalComments, InternalComments),
+            Photo = ISNULL(@Photo, Photo),
+            CustomFields = ISNULL(@CustomFields, CustomFields),
             LastEditedBy = @LastEditedBy
         WHERE StockItemID = @StockItemID;
 
@@ -259,7 +259,7 @@ BEGIN
             SELECT 1
             FROM dbo.src_ProductoGrupo
             WHERE StockItemID = @StockItemID
-              AND StockGroupID = @StockGroupID
+                AND StockGroupID = @StockGroupID
         )
         BEGIN
             INSERT INTO dbo.src_ProductoGrupo
@@ -304,7 +304,7 @@ BEGIN
 
         DELETE FROM dbo.src_ProductoGrupo
         WHERE StockItemID = @StockItemID
-          AND StockGroupID = @StockGroupID;
+            AND StockGroupID = @StockGroupID;
 
         IF @@ROWCOUNT = 0
             THROW 50203, 'El producto no pertenece al grupo indicado.', 1;

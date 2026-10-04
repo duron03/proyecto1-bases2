@@ -43,7 +43,7 @@ BEGIN
         BEGIN TRANSACTION;
 
         IF (@DeliveryLatitude IS NULL AND @DeliveryLongitude IS NOT NULL)
-           OR (@DeliveryLatitude IS NOT NULL AND @DeliveryLongitude IS NULL)
+            OR (@DeliveryLatitude IS NOT NULL AND @DeliveryLongitude IS NULL)
             THROW 50101, 'Debe enviar la latitud y la longitud juntas.', 1;
 
         DECLARE @NewSupplierID int = NEXT VALUE FOR Sequences.SupplierID;
@@ -168,7 +168,7 @@ BEGIN
         BEGIN TRANSACTION;
 
         IF (@DeliveryLatitude IS NULL AND @DeliveryLongitude IS NOT NULL)
-           OR (@DeliveryLatitude IS NOT NULL AND @DeliveryLongitude IS NULL)
+            OR (@DeliveryLatitude IS NOT NULL AND @DeliveryLongitude IS NULL)
             THROW 50101, 'Debe enviar la latitud y la longitud juntas.', 1;
 
         DECLARE @DeliveryLocation geography = NULL;
@@ -191,11 +191,11 @@ BEGIN
             SupplierReference = @SupplierReference,
             BankAccountName = @BankAccountName,
             BankAccountBranch = @BankAccountBranch,
-            BankAccountCode = @BankAccountCode,
+            BankAccountCode = ISNULL(@BankAccountCode, BankAccountCode),
             BankAccountNumber = @BankAccountNumber,
-            BankInternationalCode = @BankInternationalCode,
+            BankInternationalCode = ISNULL(@BankInternationalCode, BankInternationalCode),
             PaymentDays = @PaymentDays,
-            InternalComments = @InternalComments,
+            InternalComments = ISNULL(@InternalComments, InternalComments),
             PhoneNumber = @PhoneNumber,
             FaxNumber = @FaxNumber,
             WebsiteURL = @WebsiteURL,

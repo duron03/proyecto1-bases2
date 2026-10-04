@@ -47,11 +47,11 @@ BEGIN
         LEFT JOIN dbo.src_MetodoEntrega AS DM
             ON S.DeliveryMethodID = DM.DeliveryMethodID
         WHERE (@SupplierName IS NULL
-               OR S.SupplierName LIKE '%' + @SupplierName + '%')
-          AND (@SupplierCategoryID IS NULL
-               OR S.SupplierCategoryID = @SupplierCategoryID)
-          AND (@DeliveryMethodID IS NULL
-               OR S.DeliveryMethodID = @DeliveryMethodID)
+            OR S.SupplierName LIKE '%' + @SupplierName + '%')
+            AND (@SupplierCategoryID IS NULL
+            OR S.SupplierCategoryID = @SupplierCategoryID)
+            AND (@DeliveryMethodID IS NULL
+            OR S.DeliveryMethodID = @DeliveryMethodID)
         ORDER BY S.SupplierName ASC;
 
         COMMIT TRANSACTION;
@@ -79,15 +79,27 @@ BEGIN
             S.SupplierID,
             S.SupplierReference,
             S.SupplierName,
+            S.SupplierCategoryID,
             SC.SupplierCategoryName,
+            S.PrimaryContactPersonID,
             P1.FullName AS PrimaryContactPerson,
+            S.AlternateContactPersonID,
             P2.FullName AS AlternateContactPerson,
+            S.DeliveryMethodID,
             DM.DeliveryMethodName,
+            S.DeliveryCityID,
             DC.CityName AS DeliveryCityName,
+            S.PostalCityID,
+            PC.CityName AS PostalCityName,
             S.DeliveryPostalCode,
             S.PhoneNumber,
             S.FaxNumber,
             S.WebsiteURL,
+            S.DeliveryAddressLine1,
+            S.DeliveryAddressLine2,
+            S.PostalAddressLine1,
+            S.PostalAddressLine2,
+            S.PostalPostalCode,
             CONCAT(
                 'Delivery: ', S.DeliveryAddressLine1, ' ', S.DeliveryAddressLine2,
                 ' - ', S.DeliveryPostalCode,
@@ -98,8 +110,10 @@ BEGIN
             S.DeliveryLocation.Lat AS DeliveryLatitude,
             S.DeliveryLocation.Long AS DeliveryLongitude,
             S.BankAccountName,
+            S.BankAccountBranch,
             S.BankAccountNumber,
-            S.PaymentDays
+            S.PaymentDays,
+            S.LastEditedBy
         FROM dbo.src_Proveedor AS S
         INNER JOIN dbo.src_CategoriaProveedor AS SC
             ON S.SupplierCategoryID = SC.SupplierCategoryID
@@ -111,7 +125,47 @@ BEGIN
             ON S.DeliveryMethodID = DM.DeliveryMethodID
         INNER JOIN dbo.src_Ciudad AS DC
             ON S.DeliveryCityID = DC.CityID
+        INNER JOIN dbo.src_Ciudad AS PC
+            ON S.PostalCityID = PC.CityID
         WHERE S.SupplierID = @SupplierID;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRANSACTION;
+
+        THROW;
+    END CATCH;
+END;
+GO
+
+-- Devuelve los catálogos pequeños utilizados en proveedores.
+CREATE OR ALTER PROCEDURE dbo.usp_Proveedores_ObtenerCatalogos
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        SELECT
+            SupplierCategoryID AS [Value],
+            SupplierCategoryName AS [Label]
+        FROM dbo.src_CategoriaProveedor
+        ORDER BY SupplierCategoryName ASC;
+
+        SELECT
+            PersonID AS [Value],
+            FullName AS [Label]
+        FROM dbo.src_Persona
+        ORDER BY FullName ASC;
+
+        SELECT
+            DeliveryMethodID AS [Value],
+            DeliveryMethodName AS [Label]
+        FROM dbo.src_MetodoEntrega
+        ORDER BY DeliveryMethodName ASC;
 
         COMMIT TRANSACTION;
     END TRY

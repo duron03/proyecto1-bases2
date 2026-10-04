@@ -45,7 +45,7 @@ BEGIN
         BEGIN TRANSACTION;
 
         IF (@DeliveryLatitude IS NULL AND @DeliveryLongitude IS NOT NULL)
-           OR (@DeliveryLatitude IS NOT NULL AND @DeliveryLongitude IS NULL)
+            OR (@DeliveryLatitude IS NOT NULL AND @DeliveryLongitude IS NULL)
             THROW 50001, 'Debe enviar la latitud y la longitud juntas.', 1;
 
         DECLARE @NewCustomerID int = NEXT VALUE FOR Sequences.CustomerID;
@@ -176,7 +176,7 @@ BEGIN
         BEGIN TRANSACTION;
 
         IF (@DeliveryLatitude IS NULL AND @DeliveryLongitude IS NOT NULL)
-           OR (@DeliveryLatitude IS NOT NULL AND @DeliveryLongitude IS NULL)
+            OR (@DeliveryLatitude IS NOT NULL AND @DeliveryLongitude IS NULL)
             THROW 50001, 'Debe enviar la latitud y la longitud juntas.', 1;
 
         DECLARE @DeliveryLocation geography = NULL;

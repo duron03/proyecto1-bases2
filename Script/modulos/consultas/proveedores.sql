@@ -107,8 +107,8 @@ BEGIN
                 ' - ', S.PostalPostalCode
             ) AS [Address],
             S.DeliveryLocation,
-            S.DeliveryLocation.Lat AS DeliveryLatitude,
-            S.DeliveryLocation.Long AS DeliveryLongitude,
+            CAST(S.DeliveryLocation.Lat AS decimal(9, 6)) AS DeliveryLatitude,
+            CAST(S.DeliveryLocation.Long AS decimal(9, 6)) AS DeliveryLongitude,
             S.BankAccountName,
             S.BankAccountBranch,
             S.BankAccountNumber,

@@ -86,7 +86,15 @@ export const reports = {
     title: 'Matriz de ventas por categoría',
     shortTitle: 'Matriz anual de ventas',
     description: 'Resumen de ventas de categorías de productos por año.',
-    status: 'pending',
+    status: 'available',
+    columns: [
+      { key: 'StockGroupName', label: 'Categoría de Producto' },
+      { key: 'Sales_2013', label: 'Ventas 2013', type: 'currency', align: 'end' },
+      { key: 'Sales_2014', label: 'Ventas 2014', type: 'currency', align: 'end' },
+      { key: 'Sales_2015', label: 'Ventas 2015', type: 'currency', align: 'end' },
+      { key: 'Sales_2016', label: 'Ventas 2016', type: 'currency', align: 'end' },
+      { key: 'GrandTotal', label: 'Total General', type: 'currency', align: 'end' },
+    ],
   },
   7: {
     title: 'Seguimiento mensual de clientes',
@@ -130,6 +138,25 @@ export const reports = {
       { key: 'TotalQuantity', label: 'Cantidad total', type: 'integer', align: 'end' },
       { key: 'MinQuantity', label: 'Mínima', type: 'integer', align: 'end' },
       { key: 'MaxQuantity', label: 'Máxima', type: 'integer', align: 'end' },
+    ],
+  },
+  10: {
+    title: 'Método de envío favorito por ubicación',
+    shortTitle: 'Métodos de envío',
+    description: 'Muestra el método de envío favorito según el lugar de la venta, ordenado por cantidad.',
+    status: 'available',
+    filters: [
+      { name: 'Year', label: 'Año', type: 'select', catalog: 'years' },
+      { name: 'Month', label: 'Mes', type: 'select', catalog: 'months' },
+      { name: 'CustomerCategoryName', label: 'Categoría de cliente', maxLength: 100, placeholder: 'Coincidencia en la categoría' },
+      { name: 'StockGroupName', label: 'Categoría de producto', maxLength: 100, placeholder: 'Coincidencia en la categoría' },
+      { name: 'StockItemName', label: 'Producto', maxLength: 100, placeholder: 'Coincidencia en el producto' }
+    ],
+    columns: [
+      { key: 'DeliveryCity', label: 'Ciudad' },
+      { key: 'DeliveryState', label: 'Estado' },
+      { key: 'DeliveryMethodName', label: 'Método de entrega' },
+      { key: 'SalesCount', label: 'Cantidad de ventas', type: 'integer', align: 'end' }
     ],
   },
 }

@@ -381,6 +381,199 @@ export const getInvoiceDetails = async (req, res) => {
     }
 };
 
+// ==================== Reportes ==================== //
+
+export const getReport1 = async (req, res) => {
+    try {
+        const SupplierName = req.query.SupplierName || null;
+        const SupplierCategoryName = req.query.SupplierCategoryName || null;
+
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('SupplierName', sql.NVarChar(100), SupplierName)
+            .input('SupplierCategoryName', sql.NVarChar(50), SupplierCategoryName)
+            .execute('dbo.usp_Estadisticas_Reporte1');
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getReport2 = async (req, res) => {
+    try {
+        const CustomerName = req.query.CustomerName || null;
+        const CustomerCategoryName = req.query.CustomerCategoryName || null;
+
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('CustomerName', sql.NVarChar(100), CustomerName)
+            .input('CustomerCategoryName', sql.NVarChar(50), CustomerCategoryName)
+            .execute('dbo.usp_Estadisticas_Reporte2');
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getReport3 = async (req, res) => {
+    try {
+        const Year = req.query.Year ? parseInt(req.query.Year) : null;
+        const StockItemName = req.query.StockItemName || null;
+
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('Year', sql.Int, Year)
+            .input('StockItemName', sql.NVarChar(100), StockItemName)
+            .execute('dbo.usp_Estadisticas_Reporte3');
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getReport4 = async (req, res) => {
+    try {
+        const Year = req.query.Year ? parseInt(req.query.Year) : null;
+        const CustomerName = req.query.CustomerName || null;
+
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('Year', sql.Int, Year)
+            .input('CustomerName', sql.NVarChar(100), CustomerName)
+            .execute('dbo.usp_Estadisticas_Reporte4');
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getReport5 = async (req, res) => {
+    try {
+        const Year = req.query.Year ? parseInt(req.query.Year) : null;
+        const SupplierName = req.query.SupplierName || null;
+
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('Year', sql.Int, Year)
+            .input('SupplierName', sql.NVarChar(100), SupplierName)
+            .execute('dbo.usp_Estadisticas_Reporte5');
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getReport6 = async (req, res) => {
+    try {
+        const StockGroupName = req.query.StockGroupName || null;
+
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('StockGroupName', sql.NVarChar(100), StockGroupName)
+            .execute('dbo.usp_Estadisticas_Reporte6');
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getReport7 = async (req, res) => {
+    try {
+        const Year = req.query.Year ? parseInt(req.query.Year) : null;
+        const Month = req.query.Month ? parseInt(req.query.Month) : null;
+        const StockGroupName = req.query.StockGroupName || null;
+
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('Year', sql.Int, Year)
+            .input('Month', sql.Int, Month)
+            .input('StockGroupName', sql.NVarChar(100), StockGroupName)
+            .execute('dbo.usp_Estadisticas_Reporte7');
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getReport8 = async (req, res) => {
+    try {
+        const Year = req.query.Year ? parseInt(req.query.Year) : null;
+        const Month = req.query.Month ? parseInt(req.query.Month) : null;
+        const StockGroupName = req.query.StockGroupName || null;
+
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('Year', sql.Int, Year)
+            .input('Month', sql.Int, Month)
+            .input('StockGroupName', sql.NVarChar(100), StockGroupName)
+            .execute('dbo.usp_Estadisticas_Reporte8');
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getReport9 = async (req, res) => {
+    try {
+        const StockGroupName = req.query.StockGroupName || null;
+        const Year = req.query.Year ? parseInt(req.query.Year) : null;
+        const SupplierName = req.query.SupplierName || null;
+
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('StockGroupName', sql.NVarChar(100), StockGroupName)
+            .input('Year', sql.Int, Year)
+            .input('SupplierName', sql.NVarChar(100), SupplierName)
+            .execute('dbo.usp_Estadisticas_Reporte9');
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+
+export const getReport10 = async (req, res) => {
+    try {
+        const Year = req.query.Year ? parseInt(req.query.Year) : null;
+        const Month = req.query.Month ? parseInt(req.query.Month) : null;
+        const CustomerCategoryName = req.query.CustomerCategoryName || null;
+        const StockGroupName = req.query.StockGroupName || null;
+        const StockItemName = req.query.StockItemName || null;
+
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('Year', sql.Int, Year)
+            .input('Month', sql.Int, Month)
+            .input('CustomerCategoryName', sql.NVarChar(50), CustomerCategoryName)
+            .input('StockGroupName', sql.NVarChar(100), StockGroupName)
+            .input('StockItemName', sql.NVarChar(100), StockItemName)
+            .execute('dbo.usp_Estadisticas_Reporte10');
+
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Error:', error);
+        sendDatabaseError(res, error);
+    }
+};
+// ======================================================== //
+
 // ======================================================== //
 
 // ==================== Peticiones POST ==================== //

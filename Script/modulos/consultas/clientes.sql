@@ -130,8 +130,8 @@ BEGIN
                 ' - ', C.PostalPostalCode
             ) AS [Address],
             C.DeliveryLocation,
-            C.DeliveryLocation.Lat AS DeliveryLatitude,
-            C.DeliveryLocation.Long AS DeliveryLongitude,
+            CAST(C.DeliveryLocation.Lat AS decimal(9, 6)) AS DeliveryLatitude,
+            CAST(C.DeliveryLocation.Long AS decimal(9, 6)) AS DeliveryLongitude,
             C.LastEditedBy
         FROM dbo.src_Cliente AS C
         INNER JOIN dbo.src_CategoriaCliente AS CC

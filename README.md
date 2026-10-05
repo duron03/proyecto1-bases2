@@ -6,10 +6,19 @@
 ### Estado del proyecto:
 En curso.
 
-### Objetivos del proyecto:
+### Objetivos del proyecto.
 
+#### Cumplidos:
+- CRUD completo de todas las entidades implicadas (clientes, inventario, proveedores y ventas).
+- Reportes estadísticos 1, 2, 3, 4, 5, 6, 7, 8 y 10.
+- Interfaz gráfica de usuario.
+- Conexión entre GUI y backend funcionales.
+
+#### No cumplidos:
+- Reporte estadístico 9.
 
 ### Enlace del video:
+
 
 ---
 

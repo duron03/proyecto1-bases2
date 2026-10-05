@@ -4,7 +4,7 @@
 - Julián Pizarro Castro (2024146595).
 
 ### Estado del proyecto:
-En curso.
+Finalizado.
 
 ### Objetivos del proyecto.
 

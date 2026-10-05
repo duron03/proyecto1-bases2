@@ -30,7 +30,7 @@ BEGIN
             P.SupplierName,
             YEAR(OC.OrderDate) AS OrderYear,
             MONTH(OC.OrderDate) AS OrderMonth,
-            SUM(OD.OrderedOuters * OD.ExpectedUnitPrice) AS TotalPurchasedAmount,
+            SUM(OD.OrderedOuters * OD.ExpectedUnitPricePerOuter) AS TotalPurchasedAmount,
             MIN(OC.OrderDate) AS FirstOrderDate,
             MAX(OC.OrderDate) AS LastOrderDate,
             SUM(OD.OrderedOuters) AS TotalQuantity,

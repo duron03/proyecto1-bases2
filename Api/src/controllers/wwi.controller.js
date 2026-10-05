@@ -381,8 +381,7 @@ export const getInvoiceDetails = async (req, res) => {
     }
 };
 
-// ==================== Reportes ==================== //
-
+//Reportes.
 export const getReport1 = async (req, res) => {
     try {
         const SupplierName = req.query.SupplierName || null;

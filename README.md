@@ -17,7 +17,7 @@ En curso.
 #### No cumplidos:
 - Reporte estadístico 9.
 
-### Enlace del video:
+### Enlace del video: https://youtu.be/JJduwYpR-js
 
 
 ---
